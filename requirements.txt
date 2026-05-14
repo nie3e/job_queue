@@ -1,0 +1,6 @@
+pytest
+sqlalchemy
+psycopg2-binary
+tenacity
+testcontainers
+setuptools
