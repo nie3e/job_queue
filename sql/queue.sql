@@ -1,6 +1,12 @@
+CREATE ROLE queue_user;
+CREATE ROLE queue_dev;
+
 CREATE SCHEMA queue;
+GRANT ALL ON SCHEMA queue TO queue_dev;
+GRANT USAGE ON SCHEMA queue TO queue_user;
 
 CREATE TYPE queue.job_status AS ENUM ('pending', 'in_progress', 'done', 'failed');
+ALTER TYPE queue.job_status OWNER TO queue_dev;
 
 CREATE TABLE queue.jobs(
 	id BIGSERIAL PRIMARY KEY,
@@ -18,6 +24,8 @@ CREATE TABLE queue.jobs(
 	attempt_count INT NOT NULL DEFAULT 0,
 	error_message TEXT
 );
+ALTER TABLE queue.jobs OWNER TO queue_dev;
+GRANT SELECT, UPDATE, DELETE ON TABLE queue.jobs TO queue_user;
 
 CREATE INDEX queue_jobs_service_idx
 ON queue.jobs
@@ -91,6 +99,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+ALTER FUNCTION  queue.reserve_job(TEXT, TEXT, INT) OWNER TO queue_dev;
 
 CREATE OR REPLACE FUNCTION queue.finish_job(
 	id_arg BIGINT,
@@ -119,6 +128,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+ALTER FUNCTION queue.finish_job(BIGINT,	TEXT) OWNER TO queue_dev;
 
 CREATE OR REPLACE FUNCTION queue.finish_job(
 	ids_arg BIGINT[],
@@ -147,6 +157,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+ALTER FUNCTION queue.finish_job(BIGINT[], TEXT) OWNER TO queue_dev;
 
 CREATE OR REPLACE FUNCTION queue.fail_job(
 	ids_arg BIGINT[],
@@ -180,6 +191,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+ALTER FUNCTION queue.fail_job(BIGINT[], TEXT, TEXT) OWNER TO queue_dev;
 
 CREATE OR REPLACE FUNCTION queue.sweep_stale_jobs(
 	stale_after_arg INTERVAL DEFAULT '1 hour'
@@ -226,3 +238,4 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+ALTER FUNCTION queue.sweep_stale_jobs(INTERVAL) OWNER TO queue_dev;
