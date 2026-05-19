@@ -6,7 +6,7 @@ import traceback
 
 from sqlalchemy.orm import sessionmaker
 
-from job_queue.config.logger import logger
+from job_queue.config import logger
 from job_queue.domain import model
 from job_queue.service_layer.unit_of_work import UnitOfWork
 

@@ -3,7 +3,7 @@ import pytest
 
 from job_queue.domain import model
 from job_queue.service_layer import unit_of_work
-from tests.common import add_job, get_job
+from common import add_job, get_job
 
 pytestmark = pytest.mark.usefixtures("start_database")
 
