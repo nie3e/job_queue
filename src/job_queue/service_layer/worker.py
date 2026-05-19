@@ -32,6 +32,7 @@ class WorkerService:
         self.handler = handler
         self.service_name = handler.service_name
         self.job_batch = job_batch
+        self._shutdown = False
         signal.signal(signal.SIGINT, self._signal_handler)
         logger.info("Worker service created")
 
