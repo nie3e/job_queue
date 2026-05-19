@@ -6,6 +6,7 @@ import traceback
 
 from sqlalchemy.orm import sessionmaker
 
+from job_queue.config.logger import logger
 from job_queue.domain import model
 from job_queue.service_layer.unit_of_work import UnitOfWork
 
@@ -32,11 +33,13 @@ class WorkerService:
         self.service_name = handler.service_name
         self.job_batch = job_batch
         signal.signal(signal.SIGINT, self._signal_handler)
+        logger.info("Worker service created")
 
     def _signal_handler(self, sig: int, frame: FrameType | None) -> None:
         self._shutdown = True
 
     def _process_jobs(self) -> int:
+        logger.info("Getting job")
         with UnitOfWork(self.session_factory) as uow:
             jobs = uow.jobs.reserve_job(
                 service_name=self.service_name,
@@ -48,13 +51,17 @@ class WorkerService:
         if not jobs:
             return 0
 
+        logger.info("Received {} jobs".format(len(jobs)))
+
         try:
             self.handler.handle(jobs)
             with UnitOfWork(self.session_factory) as uow:
                 uow.jobs.finish_job(jobs, self.worker_name)
                 uow.commit()
+            logger.info("Job finished")
         except Exception:
             error_message = traceback.format_exc()
+            logger.error(error_message)
             uow.jobs.fail_job(jobs, self.worker_name, error_message)
 
         return len(jobs)
