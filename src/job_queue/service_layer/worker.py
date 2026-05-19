@@ -63,7 +63,9 @@ class WorkerService:
         except Exception:
             error_message = traceback.format_exc()
             logger.error(error_message)
-            uow.jobs.fail_job(jobs, self.worker_name, error_message)
+            with UnitOfWork(self.session_factory) as uow:
+                uow.jobs.fail_job(jobs, self.worker_name, error_message)
+                uow.commit()
 
         return len(jobs)
 
